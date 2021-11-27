@@ -46,7 +46,8 @@ class Pool
         {
             
             printf("Match result: %d - %d\n", a, b);
-            std::shared_ptr<TTransport> socket(new TSocket("127.0.0.1", 9090));
+            // 9090 端口已经被 match_server 占用
+            std::shared_ptr<TTransport> socket(new TSocket("127.0.0.1", 9091));
             std::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
             std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
             SaveClient client(protocol);
