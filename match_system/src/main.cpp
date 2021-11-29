@@ -163,7 +163,7 @@ void consume_task()
 int main(int argc, char **argv) {
     int port = 9090;
     ::std::shared_ptr<MatchHandler> handler(new MatchHandler());
-    ::std::shared_ptr<TProcessor> processor(new MatchProcessor(handler));
+    ::std::shared_ptr<TProcessor> processor(new MatchProcessor(handler)); // 处理客户端请求
     ::std::shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
     ::std::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
     ::std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
     TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
 
     cout << "start match server:" << endl;
-
+    // 处理请求的具体过程
     thread matching_thread(consume_task); // consume_task 是死循环，一直在匹配，需要多线程
 
     server.serve();

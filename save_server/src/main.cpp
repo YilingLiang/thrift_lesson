@@ -13,6 +13,7 @@
 #include <condition_variable>
 #include <queue>
 #include <vector>
+#include <iostream>
 
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
@@ -20,6 +21,7 @@ using namespace ::apache::thrift::transport;
 using namespace ::apache::thrift::server;
 
 using namespace  ::save_service;
+using namespace std;
 
 class SaveHandler : virtual public SaveIf {
  public:
@@ -41,6 +43,8 @@ class SaveHandler : virtual public SaveIf {
   int32_t save_data(const std::string& username, const std::string& password, const int32_t player1_id, const int32_t player2_id) {
     // Your implementation goes here
     printf("save_data\n");
+    cout << username << " " << password << " " << player1_id << " " << player2_id << endl;
+
     return 0;
   }
 
