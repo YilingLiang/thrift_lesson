@@ -5,6 +5,7 @@
 #include "save_client/Save.h"
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
+#include <thrift/server/TThreadedServer.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TSocket.h>
@@ -44,9 +45,9 @@ class Pool
     public:
         void save_result(int a, int b)
         {
-            
+
             printf("Match result: %d - %d\n", a, b);
-            // 9090 端口已经被 match_server 占用
+            // 9090 端口已经被 match_server 占用 这里向 9091 端口发送请求
             std::shared_ptr<TTransport> socket(new TSocket("127.0.0.1", 9091));
             std::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
             std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -54,7 +55,7 @@ class Pool
 
             try {
                 transport->open();
-                
+
                 client.save_data("acs_900", "passwd", a, b);
 
                 transport->close();
@@ -160,21 +161,38 @@ void consume_task()
     }
 }
 
+class MatchCloneFactory : virtual public MatchIfFactory {
+    public:
+        ~MatchCloneFactory() override = default;
+        MatchIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo) override
+        {
+            std::shared_ptr<TSocket> sock = std::dynamic_pointer_cast<TSocket>(connInfo.transport);
+            cout << "Incoming connection\n";
+            cout << "\tSocketInfo: "  << sock->getSocketInfo() << "\n";
+            cout << "\tPeerHost: "    << sock->getPeerHost() << "\n";
+            cout << "\tPeerAddress: " << sock->getPeerAddress() << "\n";
+            cout << "\tPeerPort: "    << sock->getPeerPort() << "\n";
+            return new MatchHandler;
+        }
+        void releaseHandler( MatchIf* handler) override {
+            delete handler;
+        }
+};
+
 int main(int argc, char **argv) {
     int port = 9090;
-    ::std::shared_ptr<MatchHandler> handler(new MatchHandler());
-    ::std::shared_ptr<TProcessor> processor(new MatchProcessor(handler)); // 处理客户端请求
-    ::std::shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
-    ::std::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
-    ::std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
-
-    TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
-
+    TThreadedServer server(
+            std::make_shared<MatchProcessorFactory>(std::make_shared<MatchCloneFactory>()),
+            std::make_shared<TServerSocket>(9090), //port
+            std::make_shared<TBufferedTransportFactory>(),
+            std::make_shared<TBinaryProtocolFactory>());
     cout << "start match server:" << endl;
     // 处理请求的具体过程
     thread matching_thread(consume_task); // consume_task 是死循环，一直在匹配，需要多线程
-
+    printf("server is runing!\n");
     server.serve();
+    printf("server is runing running!\n");
+
     return 0;
 }
 
