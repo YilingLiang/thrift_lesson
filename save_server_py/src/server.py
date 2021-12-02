@@ -1,11 +1,10 @@
 from save_server.save import Save
-from save_server.save.ttypes import *
 
 from thrift.transport import TSocket
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
-
+import os
 
 class SaveHandler:
     def __init__(self):
@@ -13,6 +12,13 @@ class SaveHandler:
 
     def save_data(self, username, password, id1, id2):
         print(username, password, id1, id2)
+        path = os.path.expanduser('~') + '/thrift_save/'
+        if not os.path.exists(path): 
+            os.mkdir(path)
+        file = path + 'match.txt'
+        with open(file, 'w') as f:
+            match_result = str(id1) + ' - ' + str(id2) + '\n'
+            f.write('Match Result:\n' + match_result)
         return 0
 
 
